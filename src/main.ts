@@ -14,21 +14,25 @@ const scene = new THREE.Scene();
 
 // Map setup
 const map = [
-    [1],
-    [1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1]
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 const mapWidth = map.reduce((acc, currentValue) => currentValue.length > acc ? currentValue.length : acc, 0);
 const mapHeight = map.length;
 const mapCenterPos = new THREE.Vector2((mapWidth - 1) / 2, -((mapHeight - 1) / 2));
+
+const mapWalkablePositions = map.reduce((acc, currentValue, index) => {
+    let walkablePositionsInRow: THREE.Vector2[] = [];
+    for (let i = 0; i < currentValue.length; i++) {
+        if (currentValue[i] == 0) walkablePositionsInRow.push(new THREE.Vector2(i, -index));
+    }
+    return Array.prototype.concat(acc, walkablePositionsInRow);
+}, [] as THREE.Vector2[]);
+const getRandomWalkablePosition = () => mapWalkablePositions[(Math.floor(Math.random() * mapWalkablePositions.length))];
 
 for (let y = 0; y < mapHeight; y++) {
     let lengthHolder = 0;
@@ -72,9 +76,12 @@ scene.add(plane)
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 const calculateCameraZ = () => {
     const magicNumber = 750; // calculated empirically
-    const zBasedOnWidth = Math.round((mapWidth * magicNumber) / window.innerWidth);
-    const zBasedOnHeight = Math.round((mapHeight * magicNumber) / window.innerHeight);
-    return Math.max(zBasedOnWidth, zBasedOnHeight);
+    const defaultZ = 5;
+
+    const zBasedOnWidth = Math.round((mapWidth * magicNumber) / window.innerWidth) + 1;
+    const zBasedOnHeight = Math.round((mapHeight * magicNumber) / window.innerHeight) + 1;
+
+    return Math.max(zBasedOnWidth, zBasedOnHeight, defaultZ);
 }
 camera.position.set(mapCenterPos.x, mapCenterPos.y, calculateCameraZ());
 
@@ -93,9 +100,10 @@ const playerConfig = {
     material: new THREE.MeshPhongMaterial({color: 0x0000ff}),
     size: 0.35
 };
+const playerRandomPos = getRandomWalkablePosition();
 const player = {
     id: 1,
-    position: new THREE.Vector3(mapWidth / 2, -mapHeight / 2, playerConfig.size),
+    position: new THREE.Vector3(playerRandomPos.x, playerRandomPos.y, playerConfig.size),
     instance: new THREE.Mesh(playerConfig.geometry, playerConfig.material)
 };
 scene.add(player.instance);
