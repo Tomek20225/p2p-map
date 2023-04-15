@@ -52,11 +52,12 @@ for (let y = 0; y < mapHeight; y++) {
         const wallMaterial = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
         const wall = new THREE.Mesh( wallGeometry, wallMaterial );
 
+        wall.position.set(startingX, -y, 0);
+
         wall.castShadow = false;
         wall.receiveShadow = true;
 
         scene.add( wall );
-        wall.position.set(startingX, -y, 0);
 
         lengthHolder = 0;
         startingX = -1;
@@ -106,18 +107,56 @@ const player = {
     position: new THREE.Vector3(playerRandomPos.x, playerRandomPos.y, playerConfig.size),
     instance: new THREE.Mesh(playerConfig.geometry, playerConfig.material)
 };
-scene.add(player.instance);
 player.instance.position.set(player.position.x, player.position.y, player.position.z);
+scene.add(player.instance);
 
 // Camera controls setup
 // const controls = new OrbitControls(camera, renderer.domElement);
+
+// Player movement
+document.addEventListener("keydown", onKeyDown);
+document.addEventListener("keyup", onKeyUp);
+
+const keyStates = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
+}
+
+function onKeyDown(e: KeyboardEvent) {
+    e.preventDefault();
+    if (!e.key.includes("Arrow")) return;
+    keyStates[e.key.replace("Arrow", "").toLowerCase()] = true;
+}
+
+function onKeyUp(e: KeyboardEvent) {
+    e.preventDefault();
+    if (!e.key.includes("Arrow")) return;
+    keyStates[e.key.replace("Arrow", "").toLowerCase()] = false;
+}
+
+function updatePlayerPosition() {
+    const speed = 0.05;
+
+    if (keyStates.up) player.position.y += speed;
+    if (keyStates.down) player.position.y -= speed;
+    if (keyStates.left) player.position.x -= speed;
+    if (keyStates.right) player.position.x += speed;
+
+    player.instance.position.copy(player.position);
+}
 
 
 // The main loop
 function animate() {
 	requestAnimationFrame( animate );
+
     // controls.update();
-	render();
+
+    updatePlayerPosition();
+
+    render();
 }
 
 function render() {
