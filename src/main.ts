@@ -16,9 +16,15 @@ const scene = new THREE.Scene();
 const map = [
     [1],
     [1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 1],
     [1, 1, 1, 1, 1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1]
 ];
 const mapWidth = map.reduce((acc, currentValue) => currentValue.length > acc ? currentValue.length : acc, 0);
 const mapHeight = map.length;
@@ -64,7 +70,13 @@ scene.add(plane)
 
 // Camera setup
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-camera.position.set(mapCenterPos.x, mapCenterPos.y, 10);
+const calculateCameraZ = () => {
+    const magicNumber = 750; // calculated empirically
+    const zBasedOnWidth = Math.round((mapWidth * magicNumber) / window.innerWidth);
+    const zBasedOnHeight = Math.round((mapHeight * magicNumber) / window.innerHeight);
+    return Math.max(zBasedOnWidth, zBasedOnHeight);
+}
+camera.position.set(mapCenterPos.x, mapCenterPos.y, calculateCameraZ());
 
 // Light setup
 const light = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -73,16 +85,16 @@ light.target.position.set(mapCenterPos.x, mapCenterPos.y, 0);
 light.castShadow = true;
 scene.add(light)
 scene.add(light.target);
-scene.add( new THREE.CameraHelper( light.shadow.camera ) );
+// scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
 // Camera controls setup
-const controls = new OrbitControls(camera, renderer.domElement);
+// const controls = new OrbitControls(camera, renderer.domElement);
 
 
 // The main loop
 function animate() {
 	requestAnimationFrame( animate );
-    //controls.update();
+    // controls.update();
 	render();
 }
 
@@ -94,6 +106,7 @@ function render() {
 window.addEventListener('resize', onWindowResize, false)
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight
+    camera.position.set(mapCenterPos.x, mapCenterPos.y, calculateCameraZ());
     camera.updateProjectionMatrix()
     renderer.setSize(window.innerWidth, window.innerHeight)
     render()
