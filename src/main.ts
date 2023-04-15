@@ -129,7 +129,8 @@ const keyStates = {
     down: false,
     left: false,
     right: false,
-    mouse: false
+    mouse: false,
+    mouseDir: new THREE.Vector2()
 }
 
 function onKeyDown(e: KeyboardEvent) {
@@ -163,42 +164,35 @@ function onMouseUp(e: MouseEvent) {
 
 function onMouseMove(e: MouseEvent) {
     e.preventDefault();
-    if (!keyStates.mouse) return;
-
     const mouseX = (e.clientX / WIDTH) * 2 - 1;
     const mouseY = -(e.clientY / HEIGHT) * 2 + 1;
 
-    const playerScreenPosition = new THREE.Vector3();
-    playerScreenPosition.copy(player.position);
-    playerScreenPosition.project(camera);
+    const playerPosition = new THREE.Vector3();
+    playerPosition.copy(player.position);
+    playerPosition.project(camera);
 
-    const direction = new THREE.Vector2(mouseX - playerScreenPosition.x, mouseY - playerScreenPosition.y);
+    const areaError = 0.025;
 
-    if (direction.y > 0) {
-        keyStates.up = true;
-        keyStates.down = false;
-    }
-    if (direction.y < 0) {
-        keyStates.down = true;
-        keyStates.up = false;
-    }
-    if (direction.x < 0) {
-        keyStates.left = true;
-        keyStates.right = false;
-    }
-    if (direction.x > 0) {
-        keyStates.right = true;
-        keyStates.left = false;
-    }
+    if ((playerPosition.x <= mouseX + areaError && playerPosition.x >= mouseX - areaError) &&
+        (playerPosition.y <= mouseY + areaError && playerPosition.y >= mouseY - areaError))
+        keyStates.mouseDir.set(0, 0);
+    else
+        keyStates.mouseDir.set(mouseX - playerPosition.x, mouseY - playerPosition.y);
 }
 
 function updatePlayerPosition() {
     const speed = 0.05;
 
-    if (keyStates.up) player.position.y += speed;
-    if (keyStates.down) player.position.y -= speed;
-    if (keyStates.left) player.position.x -= speed;
-    if (keyStates.right) player.position.x += speed;
+    if (keyStates.mouse) {
+        player.position.y += keyStates.mouseDir.y * speed;
+        player.position.x += keyStates.mouseDir.x * speed;
+    }
+    else {
+        if (keyStates.up) player.position.y += speed;
+        if (keyStates.down) player.position.y -= speed;
+        if (keyStates.left) player.position.x -= speed;
+        if (keyStates.right) player.position.x += speed;
+    }
 
     player.instance.position.copy(player.position);
 }
