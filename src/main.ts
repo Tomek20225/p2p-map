@@ -87,6 +87,20 @@ scene.add(light)
 scene.add(light.target);
 // scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
+// Player setup
+const playerConfig = {
+    geometry: new THREE.SphereGeometry(0.35),
+    material: new THREE.MeshPhongMaterial({color: 0x0000ff}),
+    size: 0.35
+};
+const player = {
+    id: 1,
+    position: new THREE.Vector3(mapWidth / 2, -mapHeight / 2, playerConfig.size),
+    instance: new THREE.Mesh(playerConfig.geometry, playerConfig.material)
+};
+scene.add(player.instance);
+player.instance.position.set(player.position.x, player.position.y, player.position.z);
+
 // Camera controls setup
 // const controls = new OrbitControls(camera, renderer.domElement);
 
@@ -106,7 +120,7 @@ function render() {
 window.addEventListener('resize', onWindowResize, false)
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight
-    camera.position.set(mapCenterPos.x, mapCenterPos.y, calculateCameraZ());
+    camera.position.setZ(calculateCameraZ());
     camera.updateProjectionMatrix()
     renderer.setSize(window.innerWidth, window.innerHeight)
     render()
