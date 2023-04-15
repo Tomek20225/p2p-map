@@ -1,9 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+// Global variables
+let WIDTH = window.innerWidth;
+let HEIGHT = window.innerHeight;
+
 // Renderer (canvas) configuration
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setSize( WIDTH, HEIGHT );
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -74,13 +78,13 @@ plane.receiveShadow = true;
 scene.add(plane)
 
 // Camera setup
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const camera = new THREE.PerspectiveCamera( 75, WIDTH / HEIGHT, 0.1, 1000 );
 const calculateCameraZ = () => {
     const magicNumber = 750; // calculated empirically
     const defaultZ = 5;
 
-    const zBasedOnWidth = Math.round((mapWidth * magicNumber) / window.innerWidth) + 1;
-    const zBasedOnHeight = Math.round((mapHeight * magicNumber) / window.innerHeight) + 1;
+    const zBasedOnWidth = Math.round((mapWidth * magicNumber) / WIDTH) + 1;
+    const zBasedOnHeight = Math.round((mapHeight * magicNumber) / HEIGHT) + 1;
 
     return Math.max(zBasedOnWidth, zBasedOnHeight, defaultZ);
 }
@@ -116,12 +120,16 @@ scene.add(player.instance);
 // Player movement
 document.addEventListener("keydown", onKeyDown);
 document.addEventListener("keyup", onKeyUp);
+document.addEventListener("mousedown", onMouseDown);
+document.addEventListener("mouseup", onMouseUp);
+document.addEventListener("mousemove", onMouseMove);
 
 const keyStates = {
     up: false,
     down: false,
     left: false,
-    right: false
+    right: false,
+    mouse: false
 }
 
 function onKeyDown(e: KeyboardEvent) {
@@ -134,6 +142,54 @@ function onKeyUp(e: KeyboardEvent) {
     e.preventDefault();
     if (!e.key.includes("Arrow")) return;
     keyStates[e.key.replace("Arrow", "").toLowerCase()] = false;
+}
+
+function onMouseDown(e: MouseEvent) {
+    e.preventDefault();
+    if (e.button != 0) return;
+    keyStates.mouse = true;
+}
+
+function onMouseUp(e: MouseEvent) {
+    e.preventDefault();
+    if (e.button != 0) return;
+
+    keyStates.up = false;
+    keyStates.down = false;
+    keyStates.left = false;
+    keyStates.right = false;
+    keyStates.mouse = false;
+}
+
+function onMouseMove(e: MouseEvent) {
+    e.preventDefault();
+    if (!keyStates.mouse) return;
+
+    const mouseX = (e.clientX / WIDTH) * 2 - 1;
+    const mouseY = -(e.clientY / HEIGHT) * 2 + 1;
+
+    const playerScreenPosition = new THREE.Vector3();
+    playerScreenPosition.copy(player.position);
+    playerScreenPosition.project(camera);
+
+    const direction = new THREE.Vector2(mouseX - playerScreenPosition.x, mouseY - playerScreenPosition.y);
+
+    if (direction.y > 0) {
+        keyStates.up = true;
+        keyStates.down = false;
+    }
+    if (direction.y < 0) {
+        keyStates.down = true;
+        keyStates.up = false;
+    }
+    if (direction.x < 0) {
+        keyStates.left = true;
+        keyStates.right = false;
+    }
+    if (direction.x > 0) {
+        keyStates.right = true;
+        keyStates.left = false;
+    }
 }
 
 function updatePlayerPosition() {
@@ -166,10 +222,12 @@ function render() {
 // Resize window when its size has changed
 window.addEventListener('resize', onWindowResize, false)
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight
+    WIDTH = window.innerWidth;
+    HEIGHT = window.innerHeight;
+    camera.aspect = WIDTH / HEIGHT;
     camera.position.setZ(calculateCameraZ());
     camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setSize(WIDTH, HEIGHT);
     render()
 }
 
