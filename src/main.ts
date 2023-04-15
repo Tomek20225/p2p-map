@@ -16,7 +16,7 @@ const scene = new THREE.Scene();
 const map = [
     [1],
     [1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 1],
     [1, 1, 1, 1, 1],
 ];
@@ -68,14 +68,15 @@ camera.position.set(mapCenterPos.x, mapCenterPos.y, 10);
 
 // Light setup
 const light = new THREE.DirectionalLight(0xffffff, 1.0);
-light.position.set(mapCenterPos.x, mapCenterPos.y, 90);
-light.target.position.set(0, 0, 0);
+light.position.set(mapCenterPos.x, mapCenterPos.y, 1000);
+light.target.position.set(mapCenterPos.x, mapCenterPos.y, 0);
 light.castShadow = true;
-scene.add(light);
+scene.add(light)
+scene.add(light.target);
 scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
 // Camera controls setup
-// const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 
 
 // The main loop
