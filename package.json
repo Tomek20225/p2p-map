@@ -3,13 +3,14 @@
 	"scripts": {
 		"dev": "npx concurrently -k \"tsc -p ./src/server -w\" \"npx nodemon ./dist/server/server.js\" \"npx vite\"",
 		"build": "vite build && tsc -p ./src/server",
-		"start": "npx concurrently -k \"npx nodemon ./dist/server/server.js\" \"npx vite preview\""
+		"start": "npx concurrently -k \"node ./dist/server/server.js\" \"npx http-server ./dist\""
 	},
 	"dependencies": {
 		"@tweenjs/tween.js": "^19.0.0",
 		"cors": "^2.8.5",
 		"dotenv": "^16.0.3",
 		"express": "^4.18.2",
+		"http-server": "^14.1.1",
 		"socket.io": "^4.6.1",
 		"socket.io-client": "^4.6.1",
 		"vite-plugin-top-level-await": "^1.3.0"
