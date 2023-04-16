@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+import GameMap from "./map";
+import type { Wall } from "./wall";
+import { calculateCameraZ } from "./helpers";
+
 // Global variables
 let WIDTH = window.innerWidth;
 let HEIGHT = window.innerHeight;
@@ -17,46 +21,21 @@ document.body.appendChild( renderer.domElement );
 const scene = new THREE.Scene();
 
 // Map setup
-const map = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
-    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-];
-const mapWidth = map.reduce((acc, currentValue) => currentValue.length > acc ? currentValue.length : acc, 0);
-const mapHeight = map.length;
-const mapCenterPos = new THREE.Vector2((mapWidth - 1) / 2, -((mapHeight - 1) / 2));
-
-const mapWalkablePositions = map.reduce((acc, currentValue, index) => {
-    let walkablePositionsInRow: THREE.Vector2[] = [];
-    for (let i = 0; i < currentValue.length; i++) {
-        if (currentValue[i] == 0) walkablePositionsInRow.push(new THREE.Vector2(i, -index));
-    }
-    return Array.prototype.concat(acc, walkablePositionsInRow);
-}, [] as THREE.Vector2[]);
-const getRandomWalkablePosition = () => mapWalkablePositions[(Math.floor(Math.random() * mapWalkablePositions.length))];
-
-type Wall = {
-    instance: THREE.Mesh,
-    box: THREE.Box3
-}
+const map = new GameMap();
 const walls = [] as Wall[];
 
-for (let y = 0; y < mapHeight; y++) {
+for (let y = 0; y < map.getHeight(); y++) {
     let lengthHolder = 0;
     let startingX = -1;
 
-    for (let x = 0; x < map[y].length; x++) {
-        if (map[y][x] == 1) {
+    for (let x = 0; x < map.get()[y].length; x++) {
+        if (map.get()[y][x] == 1) {
             lengthHolder++;
             startingX = (startingX == -1) ? x : startingX;
-            if (x != map[y].length - 1) continue;
+            if (x != map.get()[y].length - 1) continue;
         }
 
-        if (map[y][x] == 0 && lengthHolder == 0) continue;
+        if (map.get()[y][x] == 0 && lengthHolder == 0) continue;
 
         const wallGeometry = new THREE.BoxGeometry( lengthHolder, 1, 2 );
         wallGeometry.translate( lengthHolder / 2, 1 / 2, 1 / 2 );
@@ -80,8 +59,8 @@ for (let y = 0; y < mapHeight; y++) {
 }
 
 // Plane setup
-const planeGeometry = new THREE.PlaneGeometry(mapWidth, mapHeight);
-planeGeometry.translate(mapWidth / 2, -mapHeight / 2 + 1, 0);
+const planeGeometry = new THREE.PlaneGeometry(map.getWidth(), map.getHeight());
+planeGeometry.translate(map.getWidth() / 2, -map.getHeight() / 2 + 1, 0);
 const planeMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.castShadow = false;
@@ -90,28 +69,19 @@ scene.add(plane)
 
 // Camera setup
 const camera = new THREE.PerspectiveCamera( 75, WIDTH / HEIGHT, 0.1, 1000 );
-const calculateCameraZ = () => {
-    const magicNumber = 750; // calculated empirically
-    const defaultZ = 5;
-
-    const zBasedOnWidth = Math.round((mapWidth * magicNumber) / WIDTH) + 1;
-    const zBasedOnHeight = Math.round((mapHeight * magicNumber) / HEIGHT) + 1;
-
-    return Math.max(zBasedOnWidth, zBasedOnHeight, defaultZ);
-}
-camera.position.set(mapCenterPos.x, mapCenterPos.y, calculateCameraZ());
+camera.position.set(map.getCenterPosition().x, map.getCenterPosition().y, calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight()));
 
 // Light setup
 const light = new THREE.DirectionalLight(0xffffff, 1.0);
-light.position.set(mapCenterPos.x, mapCenterPos.y, 1000);
-light.target.position.set(mapCenterPos.x, mapCenterPos.y, 0);
+light.position.set(map.getCenterPosition().x, map.getCenterPosition().y, 1000);
+light.target.position.set(map.getCenterPosition().x, map.getCenterPosition().y, 0);
 light.castShadow = true;
 scene.add(light)
 scene.add(light.target);
 // scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
 // Player setup
-const playerRandomPos = getRandomWalkablePosition();
+const playerRandomPos = map.getRandomWalkablePosition();
 const playerSize = 0.35;
 const playerConfig = {
     geometry: new THREE.SphereGeometry(playerSize).translate(playerSize, playerSize, 0),
@@ -231,7 +201,6 @@ function playerIsMoving(isColliding: boolean): boolean {
 function updatePlayerAcceleration(isColliding: boolean): void {
     if (isColliding) {
         player.acc = 0;
-        return;
     }
 
     if (playerIsMoving(isColliding)) player.acc += playerConfig.accRate;
@@ -280,7 +249,7 @@ function onWindowResize() {
     WIDTH = window.innerWidth;
     HEIGHT = window.innerHeight;
     camera.aspect = WIDTH / HEIGHT;
-    camera.position.setZ(calculateCameraZ());
+    camera.position.setZ(calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight()));
     camera.updateProjectionMatrix()
     renderer.setSize(WIDTH, HEIGHT);
     render()
