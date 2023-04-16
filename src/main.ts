@@ -91,7 +91,7 @@ export const player = new Player(PlayerType.MAIN, map.getRandomWalkablePosition(
 scene.add(player.getI());
 
 // Socket setup
-const players: { [id: string]: Player } = {}
+export const players: { [id: string]: Player } = {}
 const socket = io("http://localhost:3000")
 
 socket.on('connect', function () {

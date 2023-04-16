@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 import { KeyStates } from "./inputManager";
-import { walls } from "./main";
+import { walls, players } from "./main";
 
 const playerSize = 0.35;
 export const PlayerConfig = {
@@ -80,18 +80,22 @@ export default class Player {
         return futurePlayerPos;
     }
 
-    // Collision detection
+    // Detecting collisions with walls and other players
     public isColliding(): boolean {
         const futurePlayer = new THREE.Mesh(PlayerConfig.defaultGeometry, PlayerConfig.defaultMaterial);
         futurePlayer.position.copy(this.getFuturePos());
 
         const playerBox = new THREE.Box3().setFromObject(futurePlayer);
 
-        for (const wall of walls) {
-            if (wall.box.intersectsBox(playerBox)) {
-                return true;
-            }
-        };
+        for (const wall of walls)
+            if (wall.box.intersectsBox(playerBox)) return true;
+
+        for (const playerId of Object.keys(players)) {
+            if (playerId == this.id) continue;
+
+            const otherPlayerBox = new THREE.Box3().setFromObject(players[playerId].getI());
+            if (otherPlayerBox.intersectsBox(playerBox)) return true;
+        }
 
         return false;
     }
@@ -116,6 +120,8 @@ export default class Player {
         else this.acceleration = Math.max(this.acceleration - PlayerConfig.accRate, 0);
     }
 
+    // Updating player position based on his current movement speed, direction
+    // and acceleration automatically
     public updatePos(): void {
         this.instance.position.copy(this.getFuturePos());
     }
