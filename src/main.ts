@@ -1,12 +1,12 @@
 import * as THREE from 'three';
+import TWEEN from '@tweenjs/tween.js';
+import { io } from 'socket.io-client'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import GameMap from "./map";
 import type { Wall } from "./wall";
 import { calculateCameraZ } from "./helpers";
 import Player, { PlayerType } from './player';
-import { io } from 'socket.io-client'
-import TWEEN from '@tweenjs/tween.js';
 
 
 // Global variables
@@ -92,14 +92,14 @@ scene.add(player.getI());
 
 // Socket setup
 export const players: { [id: string]: Player } = {}
-const socket = io("http://localhost:3000")
+const socket = io(import.meta.env.VITE_SOCKET_URL)
 
 socket.on('connect', function () {
-    console.log('connect')
+    console.log('connected')
 })
 
 socket.on('disconnect', function (message: any) {
-    console.log('disconnect ' + message)
+    console.log('disconnected: ' + message)
 })
 
 socket.on('id', (id: any) => {
