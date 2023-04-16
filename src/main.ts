@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import GameMap from "./map";
 import type { Wall } from "./wall";
 import { calculateCameraZ } from "./helpers";
+import Player, { PlayerConfig } from "./player";
 
 // Global variables
 let WIDTH = window.innerWidth;
@@ -81,22 +82,8 @@ scene.add(light.target);
 // scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
 // Player setup
-const playerRandomPos = map.getRandomWalkablePosition();
-const playerSize = 0.35;
-const playerConfig = {
-    geometry: new THREE.SphereGeometry(playerSize).translate(playerSize, playerSize, 0),
-    material: new THREE.MeshPhongMaterial({color: 0x0000ff}),
-    size: playerSize,
-    speed: 0.05,
-    accRate: 0.001
-};
-const player = {
-    id: 1,
-    i: new THREE.Mesh(playerConfig.geometry, playerConfig.material),
-    acc: 0
-};
-player.i.position.set(playerRandomPos.x, playerRandomPos.y, playerConfig.size);
-scene.add(player.i);
+const player = new Player("MAIN", map.getRandomWalkablePosition());
+scene.add(player.getI());
 
 // Camera controls setup
 // const controls = new OrbitControls(camera, renderer.domElement);
@@ -152,7 +139,7 @@ function onMouseMove(e: MouseEvent): void {
     const mouseY = -(e.clientY / HEIGHT) * 2 + 1;
 
     const playerPosition = new THREE.Vector3();
-    playerPosition.copy(player.i.position);
+    playerPosition.copy(player.getI().position);
     playerPosition.project(camera);
 
     const areaError = 0.025;
@@ -166,8 +153,8 @@ function onMouseMove(e: MouseEvent): void {
 
 // Extrapolation of player position
 function getPlayerFuturePosition(): THREE.Vector3 {
-    const speed = playerConfig.speed + player.acc;
-    const futurePlayerPos = new THREE.Vector3().copy(player.i.position);
+    const speed = PlayerConfig.speed + player.getAcc();
+    const futurePlayerPos = new THREE.Vector3().copy(player.getI().position);
 
     if (keyStates.mouse) {
         futurePlayerPos.y += keyStates.mouseDir.y * speed;
@@ -185,7 +172,7 @@ function getPlayerFuturePosition(): THREE.Vector3 {
 
 // Updating player position
 function updatePlayerPosition(futurePos: THREE.Vector3): void {
-    player.i.position.copy(futurePos);
+    player.getI().position.copy(futurePos);
 }
 
 // Detecting whether the player is currently moving
@@ -200,16 +187,16 @@ function playerIsMoving(isColliding: boolean): boolean {
 // Updating player acceleration based on whether he is moving
 function updatePlayerAcceleration(isColliding: boolean): void {
     if (isColliding) {
-        player.acc = 0;
+        player.setAcc(0);
     }
 
-    if (playerIsMoving(isColliding)) player.acc += playerConfig.accRate;
-    else player.acc = Math.max(player.acc - playerConfig.accRate, 0);
+    if (playerIsMoving(isColliding)) player.setAcc(player.getAcc() + PlayerConfig.accRate);
+    else player.setAcc(Math.max(player.getAcc() - PlayerConfig.accRate, 0));
 }
 
 // Collision detection
 function detectCollisions(playerFuturePos: THREE.Vector3): boolean {
-    const futurePlayer = new THREE.Mesh(playerConfig.geometry, playerConfig.material);
+    const futurePlayer = new THREE.Mesh(PlayerConfig.defaultGeometry, PlayerConfig.defaultMaterial);
     futurePlayer.position.copy(playerFuturePos);
 
     const playerBox = new THREE.Box3().setFromObject(futurePlayer);
