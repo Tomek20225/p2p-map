@@ -40,7 +40,11 @@ class App {
 
         this.server = new http.Server(app)
 
-        this.io = new Server(this.server)
+        this.io = new Server(this.server, {
+            cors: {
+                origin: "*" // TODO: Change to proper origin
+            }
+        })
 
         this.io.on('connection', (socket: Socket) => {
             console.log(socket.constructor.name)
@@ -62,7 +66,6 @@ class App {
                 if (this.clients[socket.id]) {
                     this.clients[socket.id].t = message.t //client timestamp
                     this.clients[socket.id].p = message.p //position
-                    this.clients[socket.id].r = message.r //rotation
                 }
             })
         })

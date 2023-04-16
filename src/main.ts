@@ -5,6 +5,9 @@ import GameMap from "./map";
 import type { Wall } from "./wall";
 import { calculateCameraZ } from "./helpers";
 import Player, { PlayerType } from './player';
+import { io } from 'socket.io-client'
+import TWEEN from '@tweenjs/tween.js';
+
 
 // Global variables
 export let WIDTH = window.innerWidth;
@@ -19,7 +22,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild( renderer.domElement );
 
 // Scene setup
-const scene = new THREE.Scene();
+export const scene = new THREE.Scene();
 
 // Map setup
 const map = new GameMap();
@@ -89,12 +92,62 @@ scene.add(player.getI());
 // Camera controls setup
 // const controls = new OrbitControls(camera, renderer.domElement);
 
+// Socket setup
+let myId = ''
+let timestamp = 0
+const clientCubes: { [id: string]: Player } = {}
+const socket = io("http://localhost:3000")
+
+socket.on('connect', function () {
+    console.log('connect')
+})
+socket.on('disconnect', function (message: any) {
+    console.log('disconnect ' + message)
+})
+socket.on('id', (id: any) => {
+    myId = id
+    setInterval(() => {
+        socket.emit('update', {
+            t: Date.now(),
+            p: player.getI().position,
+        })
+    }, 50)
+})
+socket.on('clients', (clients: any) => {
+    Object.keys(clients).forEach((p) => {
+        timestamp = Date.now()
+        if (!clientCubes[p]) {
+            clientCubes[p] = new Player(PlayerType.OTHER, new THREE.Vector2(1, 1))
+            clientCubes[p].getI().name = p
+            if (p != myId) scene.add(clientCubes[p].getI())
+        } else {
+            if (clients[p].p) {
+                new TWEEN.Tween(clientCubes[p].getI().position)
+                    .to(
+                        {
+                            x: clients[p].p.x,
+                            y: clients[p].p.y,
+                            z: clients[p].p.z,
+                        },
+                        50
+                    )
+                    .start()
+            }
+        }
+    })
+})
+socket.on('removeClient', (id: string) => {
+    scene.remove(scene.getObjectByName(id) as THREE.Object3D)
+})
+
 
 // The main loop
 function animate() {
 	requestAnimationFrame( animate );
 
     // controls.update();
+
+    TWEEN.update()
 
     if (!player.isColliding())
         player.updatePos();
