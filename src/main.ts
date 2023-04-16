@@ -4,11 +4,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import GameMap from "./map";
 import type { Wall } from "./wall";
 import { calculateCameraZ } from "./helpers";
-import Player, { PlayerConfig } from "./player";
+import Player, { PlayerType, PlayerConfig } from './player';
+import { KeyStates } from "./inputManager";
 
 // Global variables
-let WIDTH = window.innerWidth;
-let HEIGHT = window.innerHeight;
+export let WIDTH = window.innerWidth;
+export let HEIGHT = window.innerHeight;
 
 // Renderer (canvas) configuration
 const renderer = new THREE.WebGLRenderer();
@@ -69,7 +70,7 @@ plane.receiveShadow = true;
 scene.add(plane)
 
 // Camera setup
-const camera = new THREE.PerspectiveCamera( 75, WIDTH / HEIGHT, 0.1, 1000 );
+export const camera = new THREE.PerspectiveCamera( 75, WIDTH / HEIGHT, 0.1, 1000 );
 camera.position.set(map.getCenterPosition().x, map.getCenterPosition().y, calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight()));
 
 // Light setup
@@ -82,89 +83,26 @@ scene.add(light.target);
 // scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
 // Player setup
-const player = new Player("MAIN", map.getRandomWalkablePosition());
+export const player = new Player(PlayerType.MAIN, map.getRandomWalkablePosition());
 scene.add(player.getI());
 
 // Camera controls setup
 // const controls = new OrbitControls(camera, renderer.domElement);
-
-// Player movement
-document.addEventListener("keydown", onKeyDown);
-document.addEventListener("keyup", onKeyUp);
-document.addEventListener("mousedown", onMouseDown);
-document.addEventListener("mouseup", onMouseUp);
-document.addEventListener("mousemove", onMouseMove);
-
-const keyStates = {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-    mouse: false,
-    mouseDir: new THREE.Vector2()
-}
-
-function onKeyDown(e: KeyboardEvent):void {
-    e.preventDefault();
-    if (!e.key.includes("Arrow")) return;
-    keyStates[e.key.replace("Arrow", "").toLowerCase()] = true;
-}
-
-function onKeyUp(e: KeyboardEvent): void {
-    e.preventDefault();
-    if (!e.key.includes("Arrow")) return;
-    keyStates[e.key.replace("Arrow", "").toLowerCase()] = false;
-}
-
-function onMouseDown(e: MouseEvent): void {
-    e.preventDefault();
-    if (e.button != 0) return;
-    keyStates.mouse = true;
-}
-
-function onMouseUp(e: MouseEvent): void {
-    e.preventDefault();
-    if (e.button != 0) return;
-
-    keyStates.up = false;
-    keyStates.down = false;
-    keyStates.left = false;
-    keyStates.right = false;
-    keyStates.mouse = false;
-}
-
-function onMouseMove(e: MouseEvent): void {
-    e.preventDefault();
-    const mouseX = (e.clientX / WIDTH) * 2 - 1;
-    const mouseY = -(e.clientY / HEIGHT) * 2 + 1;
-
-    const playerPosition = new THREE.Vector3();
-    playerPosition.copy(player.getI().position);
-    playerPosition.project(camera);
-
-    const areaError = 0.025;
-
-    if ((playerPosition.x <= mouseX + areaError && playerPosition.x >= mouseX - areaError) &&
-        (playerPosition.y <= mouseY + areaError && playerPosition.y >= mouseY - areaError))
-        keyStates.mouseDir.set(0, 0);
-    else
-        keyStates.mouseDir.set(mouseX - playerPosition.x, mouseY - playerPosition.y);
-}
 
 // Extrapolation of player position
 function getPlayerFuturePosition(): THREE.Vector3 {
     const speed = PlayerConfig.speed + player.getAcc();
     const futurePlayerPos = new THREE.Vector3().copy(player.getI().position);
 
-    if (keyStates.mouse) {
-        futurePlayerPos.y += keyStates.mouseDir.y * speed;
-        futurePlayerPos.x += keyStates.mouseDir.x * speed;
+    if (KeyStates.mouse) {
+        futurePlayerPos.y += KeyStates.mouseDir.y * speed;
+        futurePlayerPos.x += KeyStates.mouseDir.x * speed;
     }
     else {
-        if (keyStates.up) futurePlayerPos.y += speed;
-        if (keyStates.down) futurePlayerPos.y -= speed;
-        if (keyStates.left) futurePlayerPos.x -= speed;
-        if (keyStates.right) futurePlayerPos.x += speed;
+        if (KeyStates.up) futurePlayerPos.y += speed;
+        if (KeyStates.down) futurePlayerPos.y -= speed;
+        if (KeyStates.left) futurePlayerPos.x -= speed;
+        if (KeyStates.right) futurePlayerPos.x += speed;
     }
 
     return futurePlayerPos;
@@ -178,7 +116,7 @@ function updatePlayerPosition(futurePos: THREE.Vector3): void {
 // Detecting whether the player is currently moving
 // If player is colliding with a wall, then he is not moving
 function playerIsMoving(isColliding: boolean): boolean {
-    if (!isColliding && (keyStates.up || keyStates.down || keyStates.left || keyStates.right || keyStates.mouse))
+    if (!isColliding && (KeyStates.up || KeyStates.down || KeyStates.left || KeyStates.right || KeyStates.mouse))
         return true;
 
     return false;
