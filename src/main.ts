@@ -4,8 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import GameMap from "./map";
 import type { Wall } from "./wall";
 import { calculateCameraZ } from "./helpers";
-import Player, { PlayerType, PlayerConfig } from './player';
-import { KeyStates } from "./inputManager";
+import Player, { PlayerType } from './player';
 
 // Global variables
 export let WIDTH = window.innerWidth;
@@ -24,7 +23,7 @@ const scene = new THREE.Scene();
 
 // Map setup
 const map = new GameMap();
-const walls = [] as Wall[];
+export const walls = [] as Wall[];
 
 for (let y = 0; y < map.getHeight(); y++) {
     let lengthHolder = 0;
@@ -89,64 +88,6 @@ scene.add(player.getI());
 // Camera controls setup
 // const controls = new OrbitControls(camera, renderer.domElement);
 
-// Extrapolation of player position
-function getPlayerFuturePosition(): THREE.Vector3 {
-    const speed = PlayerConfig.speed + player.getAcc();
-    const futurePlayerPos = new THREE.Vector3().copy(player.getI().position);
-
-    if (KeyStates.mouse) {
-        futurePlayerPos.y += KeyStates.mouseDir.y * speed;
-        futurePlayerPos.x += KeyStates.mouseDir.x * speed;
-    }
-    else {
-        if (KeyStates.up) futurePlayerPos.y += speed;
-        if (KeyStates.down) futurePlayerPos.y -= speed;
-        if (KeyStates.left) futurePlayerPos.x -= speed;
-        if (KeyStates.right) futurePlayerPos.x += speed;
-    }
-
-    return futurePlayerPos;
-}
-
-// Updating player position
-function updatePlayerPosition(futurePos: THREE.Vector3): void {
-    player.getI().position.copy(futurePos);
-}
-
-// Detecting whether the player is currently moving
-// If player is colliding with a wall, then he is not moving
-function playerIsMoving(isColliding: boolean): boolean {
-    if (!isColliding && (KeyStates.up || KeyStates.down || KeyStates.left || KeyStates.right || KeyStates.mouse))
-        return true;
-
-    return false;
-}
-
-// Updating player acceleration based on whether he is moving
-function updatePlayerAcceleration(isColliding: boolean): void {
-    if (isColliding) {
-        player.setAcc(0);
-    }
-
-    if (playerIsMoving(isColliding)) player.setAcc(player.getAcc() + PlayerConfig.accRate);
-    else player.setAcc(Math.max(player.getAcc() - PlayerConfig.accRate, 0));
-}
-
-// Collision detection
-function detectCollisions(playerFuturePos: THREE.Vector3): boolean {
-    const futurePlayer = new THREE.Mesh(PlayerConfig.defaultGeometry, PlayerConfig.defaultMaterial);
-    futurePlayer.position.copy(playerFuturePos);
-
-    const playerBox = new THREE.Box3().setFromObject(futurePlayer);
-
-    for (const wall of walls) {
-        if (wall.box.intersectsBox(playerBox)) {
-            return true;
-        }
-    };
-
-    return false;
-}
 
 // The main loop
 function animate() {
@@ -154,12 +95,10 @@ function animate() {
 
     // controls.update();
 
-    const playerFuturePosition = getPlayerFuturePosition();
-    const isColliding = detectCollisions(playerFuturePosition);
-    if (!isColliding)
-        updatePlayerPosition(playerFuturePosition);
+    if (!player.isColliding())
+        player.updatePos();
 
-    updatePlayerAcceleration(isColliding);
+    player.updateAcc();
 
     render();
 }
