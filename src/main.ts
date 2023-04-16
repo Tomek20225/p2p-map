@@ -23,6 +23,7 @@ const scene = new THREE.Scene();
 
 // Map setup
 const map = new GameMap();
+await map.init();
 export const walls = [] as Wall[];
 
 for (let y = 0; y < map.getHeight(); y++) {

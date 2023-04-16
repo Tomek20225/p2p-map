@@ -1,21 +1,20 @@
 import * as THREE from 'three';
 
 export default class GameMap {
-    private map: number[][] = [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    ];
+    private map: number[][] = [];
     private width: number;
     private height: number;
     private centerPosition: THREE.Vector2;
     private walkablePositions: THREE.Vector2[];
 
-    public constructor() {
+    public constructor() {}
+
+    public async init() {
+        const mapResp = await fetch("http://localhost:3000/map");
+        const mapJson = await mapResp.json();
+        const map = mapJson.map as number[][];
+        this.map = map;
+
         this.width = this.map.reduce((acc, currentValue) => currentValue.length > acc ? currentValue.length : acc, 0);
         this.height = this.map.length;
         this.centerPosition = new THREE.Vector2((this.width - 1) / 2, -((this.height - 1) / 2));

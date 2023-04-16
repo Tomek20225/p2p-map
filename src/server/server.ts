@@ -1,9 +1,20 @@
 import express from 'express'
 import path from 'path'
 import http from 'http'
+import cors from "cors"
 import { Server, Socket } from 'socket.io'
 
 const port: number = 3000
+
+const map: number[][] = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+];
 
 class App {
     private server: http.Server
@@ -16,6 +27,16 @@ class App {
         this.port = port
         const app = express()
         // app.use(express.static(path.join(__dirname, '../client')))
+
+        // CORS setup
+        app.use(cors({
+            origin: "*"
+        }));
+
+        // GET route for fetching the map
+        app.get("/map", (req, res) => {
+            res.send(JSON.stringify({map}));
+        })
 
         this.server = new http.Server(app)
 
