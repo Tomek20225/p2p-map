@@ -74,12 +74,13 @@ scene.add(plane)
 
 // Camera setup
 export const camera = new THREE.PerspectiveCamera( 75, WIDTH / HEIGHT, 0.1, 1000 );
-camera.position.set(map.getCenterPosition().x, map.getCenterPosition().y, calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight()));
+const mapCenterPos = map.getCenterPosition();
+camera.position.set(mapCenterPos.x, mapCenterPos.y, calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight()));
 
 // Light setup
 const light = new THREE.DirectionalLight(0xffffff, 1.0);
-light.position.set(map.getCenterPosition().x, map.getCenterPosition().y, 1000);
-light.target.position.set(map.getCenterPosition().x, map.getCenterPosition().y, 0);
+light.position.set(mapCenterPos.x, mapCenterPos.y, 1000);
+light.target.position.set(mapCenterPos.x, mapCenterPos.y, 0);
 light.castShadow = true;
 scene.add(light)
 scene.add(light.target);
@@ -89,23 +90,21 @@ scene.add(light.target);
 export const player = new Player(PlayerType.MAIN, map.getRandomWalkablePosition());
 scene.add(player.getI());
 
-// Camera controls setup
-// const controls = new OrbitControls(camera, renderer.domElement);
-
 // Socket setup
-let myId = ''
-let timestamp = 0
-const clientCubes: { [id: string]: Player } = {}
+const players: { [id: string]: Player } = {}
 const socket = io("http://localhost:3000")
 
 socket.on('connect', function () {
     console.log('connect')
 })
+
 socket.on('disconnect', function (message: any) {
     console.log('disconnect ' + message)
 })
+
 socket.on('id', (id: any) => {
-    myId = id
+    player.setId(id);
+
     setInterval(() => {
         socket.emit('update', {
             t: Date.now(),
@@ -113,16 +112,16 @@ socket.on('id', (id: any) => {
         })
     }, 50)
 })
+
 socket.on('clients', (clients: any) => {
     Object.keys(clients).forEach((p) => {
-        timestamp = Date.now()
-        if (!clientCubes[p]) {
-            clientCubes[p] = new Player(PlayerType.OTHER, new THREE.Vector2(1, 1))
-            clientCubes[p].getI().name = p
-            if (p != myId) scene.add(clientCubes[p].getI())
+        if (!players[p]) {
+            players[p] = new Player(PlayerType.OTHER, new THREE.Vector2(0, 0))
+            players[p].setId(p);
+            if (p != player.getId()) scene.add(players[p].getI())
         } else {
             if (clients[p].p) {
-                new TWEEN.Tween(clientCubes[p].getI().position)
+                new TWEEN.Tween(players[p].getI().position)
                     .to(
                         {
                             x: clients[p].p.x,
@@ -136,9 +135,14 @@ socket.on('clients', (clients: any) => {
         }
     })
 })
+
 socket.on('removeClient', (id: string) => {
     scene.remove(scene.getObjectByName(id) as THREE.Object3D)
 })
+
+// Camera controls setup
+// const controls = new OrbitControls(camera, renderer.domElement);
+
 
 
 // The main loop

@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 
 import { KeyStates } from "./inputManager";
-
 import { walls } from "./main";
 
 const playerSize = 0.35;
@@ -19,12 +18,12 @@ export enum PlayerType {
 }
 
 export default class Player {
-    private id: number; // TODO: Change to UUID
+    private id: string;
     private instance: THREE.Mesh;
     private acceleration: number;
 
     public constructor(playerType: PlayerType, position: THREE.Vector2) {
-        this.id = Math.round(Math.random() * 99999);
+        this.id = Math.round(Math.random() * 99999).toString();
         this.acceleration = 0;
 
         const color = (playerType == PlayerType.MAIN) ? 0x0000ff : 0xff0000;
@@ -36,8 +35,13 @@ export default class Player {
         this.instance.position.set(position.x, position.y, PlayerConfig.size);
     }
 
-    public getId(): number {
+    public getId(): string {
         return this.id;
+    }
+
+    public setId(id: string): void {
+        this.id = id;
+        this.instance.name = id;
     }
 
     public getI(): THREE.Mesh {
