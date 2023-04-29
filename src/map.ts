@@ -1,18 +1,6 @@
 import * as THREE from 'three'
 
-interface Vector2 {
-    x: number,
-    y: number
-}
-
-interface MazeResponse {
-    map: number[][],
-    width: number,
-    height: number,
-    walkablePositions: Vector2[]
-    entrance: Vector2,
-    exit: Vector2
-}
+import type { MazeResponse } from './types'
 
 export default class GameMap {
 	private map: number[][] = []

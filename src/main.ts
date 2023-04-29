@@ -4,7 +4,7 @@ import { io } from 'socket.io-client'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 import GameMap from './map'
-import type { Wall } from './wall'
+import type { Wall, Client, Clients, Scoreboard, MazeResponse } from './types'
 import { calculateCameraZ } from './helpers'
 import Player, { PlayerType } from './player'
 
@@ -46,7 +46,7 @@ socket.on('disconnect', function (message: any) {
 	console.log('disconnected: ' + message)
 })
 
-socket.on('id', (id: any) => {
+socket.on('id', (id: string) => {
     player = new Player(PlayerType.MAIN, map.getEntrance())
 	player.setId(id)
 
@@ -58,13 +58,13 @@ socket.on('id', (id: any) => {
 	}, 50)
 })
 
-socket.on('map', (maze: any) => {
+socket.on('map', (maze: MazeResponse) => {
     map = new GameMap(maze)
     clearScene()
     updateMap()
 })
 
-socket.on('clients', (clients: any) => {
+socket.on('clients', (clients: Clients) => {
 	Object.keys(clients).forEach((p) => {
 		if (!players[p]) {
 			players[p] = player.getId() == p ? player : new Player(PlayerType.OTHER, map.getEntrance())
@@ -95,8 +95,8 @@ socket.on('winner', async (id: string) => {
     console.log(`the winner is ${id}`)
 })
 
-socket.on('scoreboard', (scoreboard: any) => {
-    //console.log(scoreboard)
+socket.on('scoreboard', (scoreboard: Scoreboard) => {
+    console.log(scoreboard)
 })
 
 // Resetting the scene
