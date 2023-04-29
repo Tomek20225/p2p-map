@@ -95,12 +95,13 @@ export default class Player {
 
 		for (const wall of walls) if (wall.box.intersectsBox(playerBox)) return true
 
-		for (const playerId of Object.keys(players)) {
-			if (playerId == this.id) continue
+        // Collisions between players
+		//for (const playerId of Object.keys(players)) {
+		//	if (playerId == this.id) continue
 
-			const otherPlayerBox = new THREE.Box3().setFromObject(players[playerId].getI())
-			if (otherPlayerBox.intersectsBox(playerBox)) return true
-		}
+		//	const otherPlayerBox = new THREE.Box3().setFromObject(players[playerId].getI())
+		//	if (otherPlayerBox.intersectsBox(playerBox)) return true
+		//}
 
 		return false
 	}

@@ -62,6 +62,28 @@ for (let y = 0; y < map.getHeight(); y++) {
 	}
 }
 
+// Exit setup
+// It's a half-transparent, non-physical wall in different color
+const exitPos = map.getExit()
+const exitGeometry = new THREE.BoxGeometry(1, 1, 2)
+exitGeometry.translate(1 / 2, 1 / 2, 1 / 2)
+const exitMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffff00,
+    transparent: true,
+    opacity: 0.5,
+    shininess: 30,
+    specular: 0x111111
+})
+const exitInstance = new THREE.Mesh(exitGeometry, exitMaterial)
+exitInstance.position.set(exitPos.x, exitPos.y, 0)
+exitInstance.castShadow = false
+exitInstance.receiveShadow = false
+export const exit: Wall = {
+    instance: exitInstance,
+    box: new THREE.Box3().setFromObject(exitInstance)
+}
+scene.add(exit.instance)
+
 // Plane setup
 const planeGeometry = new THREE.PlaneGeometry(map.getWidth(), map.getHeight())
 planeGeometry.translate(map.getWidth() / 2, -map.getHeight() / 2 + 1, 0)
@@ -90,7 +112,7 @@ scene.add(light.target)
 // scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
 // Player setup
-export const player = new Player(PlayerType.MAIN, map.getRandomWalkablePosition())
+export const player = new Player(PlayerType.MAIN, map.getEntrance())
 scene.add(player.getI())
 
 // Socket setup
