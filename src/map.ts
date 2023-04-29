@@ -1,34 +1,33 @@
 import * as THREE from 'three'
 
+interface MazeResponse {
+    map: number[][],
+    width: number,
+    height: number,
+    walkablePositions: {x: number, y: number}[],
+    exit: {x: number, y: number}
+}
+
 export default class GameMap {
 	private map: number[][] = []
 	private width: number
 	private height: number
 	private centerPosition: THREE.Vector2
 	private walkablePositions: THREE.Vector2[]
+    private exit: THREE.Vector2
 
 	public constructor() {}
 
 	public async init() {
-		const mapResp = await fetch(import.meta.env.VITE_SOCKET_URL + '/map')
-		const mapJson = await mapResp.json()
-		const map = mapJson.map as number[][]
-		this.map = map
+		const mazeResp = await fetch(import.meta.env.VITE_SOCKET_URL + '/map')
+		const mazeJson = await mazeResp.json() as MazeResponse
 
-		this.width = this.map.reduce(
-			(acc, currentValue) => (currentValue.length > acc ? currentValue.length : acc),
-			0
-		)
-		this.height = this.map.length
-		this.centerPosition = new THREE.Vector2((this.width - 1) / 2, -((this.height - 1) / 2))
+        this.map = mazeJson.map
+        this.width = mazeJson.width
+        this.height = mazeJson.height
+        this.walkablePositions = mazeJson.walkablePositions.map(pos => new THREE.Vector2(pos.x, pos.y))
 
-		this.walkablePositions = this.map.reduce((acc, currentValue, index) => {
-			let walkablePositionsInRow: THREE.Vector2[] = []
-			for (let i = 0; i < currentValue.length; i++) {
-				if (currentValue[i] == 0) walkablePositionsInRow.push(new THREE.Vector2(i, -index))
-			}
-			return Array.prototype.concat(acc, walkablePositionsInRow)
-		}, [] as THREE.Vector2[])
+        this.centerPosition = new THREE.Vector2((this.width - 1) / 2, -((this.height - 1) / 2))
 	}
 
 	public get(): number[][] {
