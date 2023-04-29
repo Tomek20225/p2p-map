@@ -23,18 +23,13 @@ export default class GameMap {
     private entrance: THREE.Vector2
     private exit: THREE.Vector2
 
-	public constructor() {}
-
-	public async init() {
-		const mazeResp = await fetch(import.meta.env.VITE_SOCKET_URL + '/map')
-		const mazeJson = await mazeResp.json() as MazeResponse
-
-        this.map = mazeJson.map
-        this.width = mazeJson.width
-        this.height = mazeJson.height
-        this.walkablePositions = mazeJson.walkablePositions.map(pos => new THREE.Vector2(pos.x, pos.y))
-        this.entrance = new THREE.Vector2(mazeJson.entrance.x, mazeJson.entrance.y)
-        this.exit = new THREE.Vector2(mazeJson.exit.x, mazeJson.exit.y)
+	public constructor(mazeResp: MazeResponse) {
+        this.map = mazeResp.map
+        this.width = mazeResp.width
+        this.height = mazeResp.height
+        this.walkablePositions = mazeResp.walkablePositions.map(pos => new THREE.Vector2(pos.x, pos.y))
+        this.entrance = new THREE.Vector2(mazeResp.entrance.x, mazeResp.entrance.y)
+        this.exit = new THREE.Vector2(mazeResp.exit.x, mazeResp.exit.y)
 
         this.centerPosition = new THREE.Vector2((this.width - 1) / 2, -((this.height - 1) / 2))
 	}
