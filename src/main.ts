@@ -99,6 +99,7 @@ socket.on('clients', (clients: Clients) => {
             scoreObj.value = scoreVal
             const scoreLabel = new CSS2DObject(scoreP)
             scoreLabel.position.set(mapEntrancePos.x, mapEntrancePos.y, 1.5)
+            scoreLabel.name = `${p}-label`
             scoreObj.instance = scoreLabel
             players[p].score = scoreObj
             scene.add(scoreLabel)
@@ -128,20 +129,22 @@ socket.on('clients', (clients: Clients) => {
 				.start()
 		}
 	})
-
-    console.log(players)
 })
 
 socket.on('removeClient', (id: string) => {
 	scene.remove(scene.getObjectByName(id) as THREE.Object3D)
+	scene.remove(scene.getObjectByName(`${id}-label`) as THREE.Object3D)
 })
 
 socket.on('winner', (id: string) => {
     console.log(`the winner is ${id}`)
 })
 
-socket.on('scoreboard', (sb: Scoreboard) => {
-
+socket.on('scoreboard', (scoreboard: Scoreboard) => {
+    Object.keys(scoreboard).forEach(pId => {
+        players[pId].score.value = scoreboard[pId]
+        players[pId].score.domElement.textContent = scoreboard[pId].toString()
+    })
 })
 
 // Resetting the scene
@@ -154,6 +157,10 @@ function clearScene() {
 // Displaying the map
 function updateMap() {
     const mapCenterPos = map.getCenterPosition()
+    const mapEntrancePos = map.getEntrance()
+    const mapExitPos = map.getExit()
+    const mapWidth = map.getWidth()
+    const mapHeight = map.getHeight()
     walls = [] as Wall[]
 
     for (let y = 0; y < map.getHeight(); y++) {
@@ -192,7 +199,6 @@ function updateMap() {
 
     // Exit setup
     // It's a half-transparent, non-physical wall in different color
-    const exitPos = map.getExit()
     const exitGeometry = new THREE.BoxGeometry(1, 1, 2)
     exitGeometry.translate(1 / 2, 1 / 2, 1 / 2)
     const exitMaterial = new THREE.MeshPhongMaterial({
@@ -203,7 +209,7 @@ function updateMap() {
         specular: 0x111111
     })
     const exitInstance = new THREE.Mesh(exitGeometry, exitMaterial)
-    exitInstance.position.set(exitPos.x, exitPos.y, 0)
+    exitInstance.position.set(mapExitPos.x, mapExitPos.y, 0)
     exitInstance.castShadow = false
     exitInstance.receiveShadow = false
     const exit: Wall = {
@@ -213,8 +219,8 @@ function updateMap() {
     scene.add(exit.instance)
 
     // Plane setup
-    const planeGeometry = new THREE.PlaneGeometry(map.getWidth(), map.getHeight())
-    planeGeometry.translate(map.getWidth() / 2, -map.getHeight() / 2 + 1, 0)
+    const planeGeometry = new THREE.PlaneGeometry(mapWidth, mapHeight)
+    planeGeometry.translate(mapWidth / 2, -mapHeight / 2 + 1, 0)
     const planeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff })
     const plane = new THREE.Mesh(planeGeometry, planeMaterial)
     plane.castShadow = false
@@ -234,15 +240,17 @@ function updateMap() {
     camera.position.set(
 	    mapCenterPos.x,
 	    mapCenterPos.y,
-	    calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight())
+	    calculateCameraZ(WIDTH, HEIGHT, mapWidth, mapHeight)
     )
-
-    const mapEntrancePos = map.getEntrance()
 
     Object.keys(players).forEach((p) => {
         const playerInstance = players[p].object.getI()
-        scene.add(playerInstance)
         playerInstance.position.set(mapEntrancePos.x, mapEntrancePos.y, playerInstance.position.z)
+        scene.add(playerInstance)
+
+        const scoreInstance = players[p].score.instance
+        scoreInstance.position.set(mapEntrancePos.x, mapEntrancePos.y, playerInstance.position.z)
+        scene.add(scoreInstance)
     })
 }
 
