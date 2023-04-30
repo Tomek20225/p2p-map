@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-import { player, camera, WIDTH, HEIGHT } from './main'
+import { player, camera, WIDTH, HEIGHT, GAME_LOADED } from './main'
 
 document.addEventListener('keydown', onKeyDown)
 document.addEventListener('keyup', onKeyUp)
@@ -48,6 +48,9 @@ function onMouseUp(e: MouseEvent): void {
 
 function onMouseMove(e: MouseEvent): void {
 	e.preventDefault()
+
+    if (!GAME_LOADED) return
+
 	const mouseX = (e.clientX / WIDTH) * 2 - 1
 	const mouseY = -(e.clientY / HEIGHT) * 2 + 1
 

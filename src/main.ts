@@ -1,10 +1,11 @@
 import * as THREE from 'three'
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import TWEEN from '@tweenjs/tween.js'
 import { io } from 'socket.io-client'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 import GameMap from './map'
-import type { Wall, Client, Clients, Scoreboard, MazeResponse } from './types'
+import type { Wall, Clients, Scoreboard, MazeResponse, Players, PlayerDto, Score } from './types'
 import { calculateCameraZ } from './helpers'
 import Player, { PlayerType } from './player'
 
@@ -12,14 +13,23 @@ import Player, { PlayerType } from './player'
 // Global variables
 export let WIDTH = window.innerWidth
 export let HEIGHT = window.innerHeight
+export let GAME_LOADED = false
 
-// Renderer (canvas) configuration
+// WebGL renderer (canvas) configuration
 const renderer = new THREE.WebGLRenderer()
 renderer.setSize(WIDTH, HEIGHT)
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 document.body.appendChild(renderer.domElement)
+
+// CSS text renderer configuration (for displaying scores)
+const labelRenderer = new CSS2DRenderer
+labelRenderer.setSize(WIDTH, HEIGHT)
+labelRenderer.domElement.style.position = 'absolute'
+labelRenderer.domElement.style.top = '0px'
+labelRenderer.domElement.style.pointerEvents = 'none'
+document.body.appendChild(labelRenderer.domElement)
 
 // Scene setup
 export const scene = new THREE.Scene()
@@ -33,7 +43,7 @@ export let walls = [] as Wall[]
 
 // Player setup
 export let player: Player
-export const players: { [id: string]: Player } = {}
+export const players: Players = {}
 
 // Socket setup
 const socket = io(import.meta.env.VITE_SOCKET_URL)
@@ -62,17 +72,34 @@ socket.on('map', (maze: MazeResponse) => {
     map = new GameMap(maze)
     clearScene()
     updateMap()
+
+    GAME_LOADED = true
 })
 
 socket.on('clients', (clients: Clients) => {
-	Object.keys(clients).forEach((p) => {
+	const mapEntrancePos = map.getEntrance()
+
+    Object.keys(clients).forEach((p) => {
 		if (!players[p]) {
-			players[p] = player.getId() == p ? player : new Player(PlayerType.OTHER, map.getEntrance())
-			players[p].setId(p)
-			scene.add(players[p].getI())
+            players[p] = {} as PlayerDto
+			players[p].object = player.getId() == p ? player : new Player(PlayerType.OTHER, mapEntrancePos)
+			players[p].object.setId(p)
+			scene.add(players[p].object.getI())
+
+            const scoreObj = {} as Score
+            const scoreP = document.createElement('p')
+            scoreObj.domElement = scoreP
+            const scoreVal = 0
+            scoreP.textContent = scoreVal.toString()
+            scoreObj.value = scoreVal
+            const scoreLabel = new CSS2DObject(scoreP)
+            scoreLabel.position.set(mapEntrancePos.x, mapEntrancePos.y, 1.5)
+            scoreObj.instance = scoreLabel
+            players[p].score = scoreObj
+            scene.add(scoreLabel)
 		} else {
 			if (clients[p].p && player.getId() != p) {
-				new TWEEN.Tween(players[p].getI().position)
+				new TWEEN.Tween(players[p].object.getI().position)
 					.to(
 						{
 							x: clients[p].p.x,
@@ -82,21 +109,34 @@ socket.on('clients', (clients: Clients) => {
 						50
 					)
 					.start()
-			}
+            }
+
+            new TWEEN.Tween(players[p].score.instance.position)
+				.to(
+					{
+						x: clients[p].p.x,
+                        y: clients[p].p.y,
+						z: 1.5,
+					},
+					50
+				)
+				.start()
 		}
 	})
+
+    console.log(players)
 })
 
 socket.on('removeClient', (id: string) => {
 	scene.remove(scene.getObjectByName(id) as THREE.Object3D)
 })
 
-socket.on('winner', async (id: string) => {
+socket.on('winner', (id: string) => {
     console.log(`the winner is ${id}`)
 })
 
-socket.on('scoreboard', (scoreboard: Scoreboard) => {
-    console.log(scoreboard)
+socket.on('scoreboard', (sb: Scoreboard) => {
+
 })
 
 // Resetting the scene
@@ -195,7 +235,7 @@ function updateMap() {
     const mapEntrancePos = map.getEntrance()
 
     Object.keys(players).forEach((p) => {
-        const playerInstance = players[p].getI()
+        const playerInstance = players[p].object.getI()
         scene.add(playerInstance)
         playerInstance.position.set(mapEntrancePos.x, mapEntrancePos.y, playerInstance.position.z)
     })
@@ -207,21 +247,24 @@ function updateMap() {
 
 // The main loop
 function animate() {
-	requestAnimationFrame(animate)
+    requestAnimationFrame(animate)
 
 	// controls.update();
 
 	TWEEN.update()
 
-	if (!player.isColliding()) player.updatePos()
+    if (GAME_LOADED) {
+	    if (!player.isColliding()) player.updatePos()
 
-	player.updateAcc()
+	    player.updateAcc()
+    }
 
 	render()
 }
 
 function render() {
 	renderer.render(scene, camera)
+    labelRenderer.render(scene,camera)
 }
 
 // Resize window when its size has changed
@@ -233,6 +276,7 @@ function onWindowResize() {
 	camera.position.setZ(calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight()))
 	camera.updateProjectionMatrix()
 	renderer.setSize(WIDTH, HEIGHT)
+    labelRenderer.setSize(WIDTH, HEIGHT)
 	render()
 }
 

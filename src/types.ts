@@ -1,4 +1,7 @@
 import * as THREE from 'three'
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
+import Player from './player'
+
 
 export type Wall = {
 	instance: THREE.Mesh
@@ -34,4 +37,19 @@ export type MazeResponse = {
     walkablePositions: Vector2[]
     entrance: Vector2,
     exit: Vector2
+}
+
+export type Players = {
+    [id: string]: PlayerDto
+}
+
+export type PlayerDto = {
+    object: Player,
+    score: Score
+}
+
+export type Score = {
+    domElement: HTMLElement,
+    instance: CSS2DObject,
+    value: number
 }
