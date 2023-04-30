@@ -93,10 +93,10 @@ export default class Player {
 
 		const playerBox = new THREE.Box3().setFromObject(futurePlayer)
 
-        // Collisions with walls
+		// Collisions with walls
 		for (const wall of walls) if (wall.box.intersectsBox(playerBox)) return true
 
-        // Collisions with players
+		// Collisions with players
 		//for (const playerId of Object.keys(players)) {
 		//	if (playerId == this.id) continue
 

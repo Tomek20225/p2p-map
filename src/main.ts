@@ -9,7 +9,6 @@ import type { Wall, Clients, Scoreboard, MazeResponse, Players, PlayerDto, Score
 import { calculateCameraZ } from './helpers'
 import Player, { PlayerConfig, PlayerType } from './player'
 
-
 // Global variables
 export let WIDTH = window.innerWidth
 export let HEIGHT = window.innerHeight
@@ -24,7 +23,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap
 document.body.appendChild(renderer.domElement)
 
 // CSS text renderer configuration (for displaying scores)
-const labelRenderer = new CSS2DRenderer
+const labelRenderer = new CSS2DRenderer()
 labelRenderer.setSize(WIDTH, HEIGHT)
 labelRenderer.domElement.style.position = 'absolute'
 labelRenderer.domElement.style.top = '0px'
@@ -57,7 +56,7 @@ socket.on('disconnect', function (message: any) {
 })
 
 socket.on('id', (id: string) => {
-    player = new Player(PlayerType.MAIN, map.getEntrance())
+	player = new Player(PlayerType.MAIN, map.getEntrance())
 	player.setId(id)
 
 	setInterval(() => {
@@ -69,40 +68,41 @@ socket.on('id', (id: string) => {
 })
 
 socket.on('map', (maze: MazeResponse) => {
-    map = new GameMap(maze)
-    clearScene()
-    updateMap()
+	map = new GameMap(maze)
+	clearScene()
+	updateMap()
 
-    GAME_LOADED = true
+	GAME_LOADED = true
 })
 
 socket.on('clients', (clients: Clients) => {
 	const mapEntrancePos = map.getEntrance()
 
-    Object.keys(clients).forEach((p) => {
+	Object.keys(clients).forEach((p) => {
 		if (!players[p]) {
-            players[p] = {} as PlayerDto
-			players[p].object = player.getId() == p ? player : new Player(PlayerType.OTHER, mapEntrancePos)
+			players[p] = {} as PlayerDto
+			players[p].object =
+				player.getId() == p ? player : new Player(PlayerType.OTHER, mapEntrancePos)
 			players[p].object.setId(p)
 			scene.add(players[p].object.getI())
 
-            const scoreObj = {} as Score
-            const scoreP = document.createElement('p')
-            scoreP.style.color = "white"
-            scoreP.style.fontFamily = "Arial"
-            scoreP.style.fontSize = "20px"
-            scoreP.style.fontWeight = "bold"
-            scoreP.style.textShadow = "0px 0px 10px black"
-            scoreObj.domElement = scoreP
-            const scoreVal = 0
-            scoreP.textContent = scoreVal.toString()
-            scoreObj.value = scoreVal
-            const scoreLabel = new CSS2DObject(scoreP)
-            scoreLabel.position.set(mapEntrancePos.x, mapEntrancePos.y, 1.5)
-            scoreLabel.name = `${p}-label`
-            scoreObj.instance = scoreLabel
-            players[p].score = scoreObj
-            scene.add(scoreLabel)
+			const scoreObj = {} as Score
+			const scoreP = document.createElement('p')
+			scoreP.style.color = 'white'
+			scoreP.style.fontFamily = 'Arial'
+			scoreP.style.fontSize = '20px'
+			scoreP.style.fontWeight = 'bold'
+			scoreP.style.textShadow = '0px 0px 10px black'
+			scoreObj.domElement = scoreP
+			const scoreVal = 0
+			scoreP.textContent = scoreVal.toString()
+			scoreObj.value = scoreVal
+			const scoreLabel = new CSS2DObject(scoreP)
+			scoreLabel.position.set(mapEntrancePos.x, mapEntrancePos.y, 1.5)
+			scoreLabel.name = `${p}-label`
+			scoreObj.instance = scoreLabel
+			players[p].score = scoreObj
+			scene.add(scoreLabel)
 		} else {
 			if (clients[p].p && player.getId() != p) {
 				new TWEEN.Tween(players[p].object.getI().position)
@@ -115,13 +115,13 @@ socket.on('clients', (clients: Clients) => {
 						50
 					)
 					.start()
-            }
+			}
 
-            new TWEEN.Tween(players[p].score.instance.position)
+			new TWEEN.Tween(players[p].score.instance.position)
 				.to(
 					{
 						x: clients[p].p.x + 0.35,
-                        y: clients[p].p.y + 0.7,
+						y: clients[p].p.y + 0.7,
 						z: PlayerConfig.size,
 					},
 					50
@@ -137,147 +137,146 @@ socket.on('removeClient', (id: string) => {
 })
 
 socket.on('winner', (id: string) => {
-    console.log(`the winner is ${id}`)
+	console.log(`the winner is ${id}`)
 })
 
 socket.on('scoreboard', (scoreboard: Scoreboard) => {
-    Object.keys(scoreboard).forEach(pId => {
-        players[pId].score.value = scoreboard[pId]
-        players[pId].score.domElement.textContent = scoreboard[pId].toString()
-    })
+	Object.keys(scoreboard).forEach((pId) => {
+		players[pId].score.value = scoreboard[pId]
+		players[pId].score.domElement.textContent = scoreboard[pId].toString()
+	})
 })
 
 // Resetting the scene
 function clearScene() {
-    while(scene.children.length > 0){
-       scene.remove(scene.children[0])
-    }
+	while (scene.children.length > 0) {
+		scene.remove(scene.children[0])
+	}
 }
 
 // Displaying the map
 function updateMap() {
-    const mapCenterPos = map.getCenterPosition()
-    const mapEntrancePos = map.getEntrance()
-    const mapExitPos = map.getExit()
-    const mapWidth = map.getWidth()
-    const mapHeight = map.getHeight()
-    walls = [] as Wall[]
+	const mapCenterPos = map.getCenterPosition()
+	const mapEntrancePos = map.getEntrance()
+	const mapExitPos = map.getExit()
+	const mapWidth = map.getWidth()
+	const mapHeight = map.getHeight()
+	walls = [] as Wall[]
 
-    for (let y = 0; y < map.getHeight(); y++) {
-        let lengthHolder = 0
-        let startingX = -1
+	for (let y = 0; y < map.getHeight(); y++) {
+		let lengthHolder = 0
+		let startingX = -1
 
-        for (let x = 0; x < map.get()[y].length; x++) {
-            if (map.get()[y][x] == 1) {
-                lengthHolder++
-                startingX = startingX == -1 ? x : startingX
-                if (x != map.get()[y].length - 1) continue
-            }
+		for (let x = 0; x < map.get()[y].length; x++) {
+			if (map.get()[y][x] == 1) {
+				lengthHolder++
+				startingX = startingX == -1 ? x : startingX
+				if (x != map.get()[y].length - 1) continue
+			}
 
-            if (map.get()[y][x] == 0 && lengthHolder == 0) continue
+			if (map.get()[y][x] == 0 && lengthHolder == 0) continue
 
-            const wallGeometry = new THREE.BoxGeometry(lengthHolder, 1, 2)
-            wallGeometry.translate(lengthHolder / 2, 1 / 2, 1 / 2)
-            const wallMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 })
-            const wall = new THREE.Mesh(wallGeometry, wallMaterial)
+			const wallGeometry = new THREE.BoxGeometry(lengthHolder, 1, 2)
+			wallGeometry.translate(lengthHolder / 2, 1 / 2, 1 / 2)
+			const wallMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 })
+			const wall = new THREE.Mesh(wallGeometry, wallMaterial)
 
-            wall.position.set(startingX, -y, 0)
+			wall.position.set(startingX, -y, 0)
 
-            wall.castShadow = false
-            wall.receiveShadow = true
+			wall.castShadow = false
+			wall.receiveShadow = true
 
-            scene.add(wall)
-            walls.push({
-                instance: wall,
-                box: new THREE.Box3().setFromObject(wall),
-            } as Wall)
+			scene.add(wall)
+			walls.push({
+				instance: wall,
+				box: new THREE.Box3().setFromObject(wall),
+			} as Wall)
 
-            lengthHolder = 0
-            startingX = -1
-        }
-    }
+			lengthHolder = 0
+			startingX = -1
+		}
+	}
 
-    // Exit setup
-    // It's a half-transparent, non-physical wall in different color
-    const exitGeometry = new THREE.BoxGeometry(1, 1, 2)
-    exitGeometry.translate(1 / 2, 1 / 2, 1 / 2)
-    const exitMaterial = new THREE.MeshPhongMaterial({
-        color: 0xffff00,
-        transparent: true,
-        opacity: 0.5,
-        shininess: 30,
-        specular: 0x111111
-    })
-    const exitInstance = new THREE.Mesh(exitGeometry, exitMaterial)
-    exitInstance.position.set(mapExitPos.x, mapExitPos.y, 0)
-    exitInstance.castShadow = false
-    exitInstance.receiveShadow = false
-    const exit: Wall = {
-        instance: exitInstance,
-        box: new THREE.Box3().setFromObject(exitInstance)
-    }
-    scene.add(exit.instance)
+	// Exit setup
+	// It's a half-transparent, non-physical wall in different color
+	const exitGeometry = new THREE.BoxGeometry(1, 1, 2)
+	exitGeometry.translate(1 / 2, 1 / 2, 1 / 2)
+	const exitMaterial = new THREE.MeshPhongMaterial({
+		color: 0xffff00,
+		transparent: true,
+		opacity: 0.5,
+		shininess: 30,
+		specular: 0x111111,
+	})
+	const exitInstance = new THREE.Mesh(exitGeometry, exitMaterial)
+	exitInstance.position.set(mapExitPos.x, mapExitPos.y, 0)
+	exitInstance.castShadow = false
+	exitInstance.receiveShadow = false
+	const exit: Wall = {
+		instance: exitInstance,
+		box: new THREE.Box3().setFromObject(exitInstance),
+	}
+	scene.add(exit.instance)
 
-    // Plane setup
-    const planeGeometry = new THREE.PlaneGeometry(mapWidth, mapHeight)
-    planeGeometry.translate(mapWidth / 2, -mapHeight / 2 + 1, 0)
-    const planeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff })
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial)
-    plane.castShadow = false
-    plane.receiveShadow = true
-    scene.add(plane)
+	// Plane setup
+	const planeGeometry = new THREE.PlaneGeometry(mapWidth, mapHeight)
+	planeGeometry.translate(mapWidth / 2, -mapHeight / 2 + 1, 0)
+	const planeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff })
+	const plane = new THREE.Mesh(planeGeometry, planeMaterial)
+	plane.castShadow = false
+	plane.receiveShadow = true
+	scene.add(plane)
 
-    // Light setup
-    const light = new THREE.DirectionalLight(0xffffff, 1.0)
-    light.position.set(mapCenterPos.x, mapCenterPos.y, 1000)
-    light.target.position.set(mapCenterPos.x, mapCenterPos.y, 0)
-    light.castShadow = true
-    scene.add(light)
-    scene.add(light.target)
-    // scene.add( new THREE.CameraHelper( light.shadow.camera ) );
+	// Light setup
+	const light = new THREE.DirectionalLight(0xffffff, 1.0)
+	light.position.set(mapCenterPos.x, mapCenterPos.y, 1000)
+	light.target.position.set(mapCenterPos.x, mapCenterPos.y, 0)
+	light.castShadow = true
+	scene.add(light)
+	scene.add(light.target)
+	// scene.add( new THREE.CameraHelper( light.shadow.camera ) );
 
-    // Update camera position
-    camera.position.set(
-	    mapCenterPos.x,
-	    mapCenterPos.y,
-	    calculateCameraZ(WIDTH, HEIGHT, mapWidth, mapHeight)
-    )
+	// Update camera position
+	camera.position.set(
+		mapCenterPos.x,
+		mapCenterPos.y,
+		calculateCameraZ(WIDTH, HEIGHT, mapWidth, mapHeight)
+	)
 
-    Object.keys(players).forEach((p) => {
-        const playerInstance = players[p].object.getI()
-        playerInstance.position.set(mapEntrancePos.x, mapEntrancePos.y, playerInstance.position.z)
-        scene.add(playerInstance)
+	Object.keys(players).forEach((p) => {
+		const playerInstance = players[p].object.getI()
+		playerInstance.position.set(mapEntrancePos.x, mapEntrancePos.y, playerInstance.position.z)
+		scene.add(playerInstance)
 
-        const scoreInstance = players[p].score.instance
-        scoreInstance.position.set(mapEntrancePos.x, mapEntrancePos.y, playerInstance.position.z)
-        scene.add(scoreInstance)
-    })
+		const scoreInstance = players[p].score.instance
+		scoreInstance.position.set(mapEntrancePos.x, mapEntrancePos.y, playerInstance.position.z)
+		scene.add(scoreInstance)
+	})
 }
-
 
 // Camera controls setup
 // const controls = new OrbitControls(camera, renderer.domElement);
 
 // The main loop
 function animate() {
-    requestAnimationFrame(animate)
+	requestAnimationFrame(animate)
 
 	// controls.update();
 
 	TWEEN.update()
 
-    if (GAME_LOADED) {
-	    if (!player.isColliding()) player.updatePos()
+	if (GAME_LOADED) {
+		if (!player.isColliding()) player.updatePos()
 
-	    player.updateAcc()
-    }
+		player.updateAcc()
+	}
 
 	render()
 }
 
 function render() {
 	renderer.render(scene, camera)
-    labelRenderer.render(scene,camera)
+	labelRenderer.render(scene, camera)
 }
 
 // Resize window when its size has changed
@@ -289,7 +288,7 @@ function onWindowResize() {
 	camera.position.setZ(calculateCameraZ(WIDTH, HEIGHT, map.getWidth(), map.getHeight()))
 	camera.updateProjectionMatrix()
 	renderer.setSize(WIDTH, HEIGHT)
-    labelRenderer.setSize(WIDTH, HEIGHT)
+	labelRenderer.setSize(WIDTH, HEIGHT)
 	render()
 }
 

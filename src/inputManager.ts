@@ -49,7 +49,7 @@ function onMouseUp(e: MouseEvent): void {
 function onMouseMove(e: MouseEvent): void {
 	e.preventDefault()
 
-    if (!GAME_LOADED) return
+	if (!GAME_LOADED) return
 
 	const mouseX = (e.clientX / WIDTH) * 2 - 1
 	const mouseY = -(e.clientY / HEIGHT) * 2 + 1
