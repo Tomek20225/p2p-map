@@ -7,7 +7,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import GameMap from './map'
 import type { Wall, Clients, Scoreboard, MazeResponse, Players, PlayerDto, Score } from './types'
 import { calculateCameraZ } from './helpers'
-import Player, { PlayerType } from './player'
+import Player, { PlayerConfig, PlayerType } from './player'
 
 
 // Global variables
@@ -88,6 +88,11 @@ socket.on('clients', (clients: Clients) => {
 
             const scoreObj = {} as Score
             const scoreP = document.createElement('p')
+            scoreP.style.color = "white"
+            scoreP.style.fontFamily = "Arial"
+            scoreP.style.fontSize = "20px"
+            scoreP.style.fontWeight = "bold"
+            scoreP.style.textShadow = "0px 0px 10px black"
             scoreObj.domElement = scoreP
             const scoreVal = 0
             scoreP.textContent = scoreVal.toString()
@@ -114,9 +119,9 @@ socket.on('clients', (clients: Clients) => {
             new TWEEN.Tween(players[p].score.instance.position)
 				.to(
 					{
-						x: clients[p].p.x,
-                        y: clients[p].p.y,
-						z: 1.5,
+						x: clients[p].p.x + 0.35,
+                        y: clients[p].p.y + 0.7,
+						z: PlayerConfig.size,
 					},
 					50
 				)
